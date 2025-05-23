@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     }
 
     const client = await connectToMongo();
-    const dbName = 'your_database_name'; // Замените на имя вашей базы данных
+    const dbName = 'authapp'; // Замените на имя вашей базы данных
     const db = client.db(dbName);
     const collection = db.collection('auth_approvals');
 
