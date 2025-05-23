@@ -1,22 +1,27 @@
 'use client';
 
 import { useUser, SignInButton, SignUpButton } from '@clerk/nextjs';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
   const { isSignedIn, user, isLoaded } = useUser();
   const [appId, setAppId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
-  console.log('User state:', { isSignedIn, userId: user?.id, isLoaded }); // Отладка
+  // Отладка состояния пользователя
+  useEffect(() => {
+    console.log('User state:', { isSignedIn, userId: user?.id, isLoaded });
+  }, [isSignedIn, user, isLoaded]);
 
   const requestAccess = async () => {
     if (!user?.id || !appId) {
-      alert('Please sign in and select an app');
+      setMessage('Please sign in and select an app');
       return;
     }
 
     setIsLoading(true);
+    setMessage(null);
     try {
       const response = await fetch('/api/request-access', {
         method: 'POST',
@@ -26,23 +31,24 @@ export default function Home() {
         body: JSON.stringify({ userId: user.id, appId }),
       });
       const result = await response.json();
-      console.log('API response:', result); // Отладка
-      alert(result.message);
+      console.log('API response:', result);
+      setMessage(result.message);
     } catch (error) {
       console.error('Error requesting access:', error);
-      alert('Error requesting access');
+      setMessage('Error requesting access');
     } finally {
       setIsLoading(false);
     }
   };
 
   if (!isLoaded) {
-    return <div>Loading...</div>;
+    return <div>Loading user data...</div>;
   }
 
   return (
     <div>
       <h1>Test Clerk Authentication</h1>
+      {message && <p style={{ color: message.includes('Error') ? 'red' : 'green' }}>{message}</p>}
       {!isSignedIn ? (
         <div>
           <SignInButton mode="modal">
@@ -54,11 +60,11 @@ export default function Home() {
         </div>
       ) : (
         <div>
-          <p>Welcome, {user?.firstName}</p>
+          <p>Welcome, {user?.firstName || 'User'}!</p>
           <select
             value={appId}
             onChange={(e) => {
-              console.log('Selected appId:', e.target.value); // Отладка
+              console.log('Selected appId:', e.target.value);
               setAppId(e.target.value);
             }}
           >
