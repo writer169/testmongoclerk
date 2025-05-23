@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
     const client = await connectToMongo();
     const db = client.db('your_database_name');
-    const collection = db.collection('access_requests');
+    const collection = db.collection('auth_approvals'); // Изменено с access_requests на auth_approvals
 
     const existingRequest = await collection.findOne({ userId, appId });
     if (existingRequest) {
