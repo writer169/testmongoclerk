@@ -44,18 +44,24 @@ export async function POST(request: Request) {
     }
 
     const client = await connectToMongo();
-    const db = client.db('your_database_name'); // Замените на имя вашей базы данных
+    const dbName = 'your_database_name'; // Замените на имя вашей базы данных
+    const db = client.db(dbName);
     const collection = db.collection('auth_approvals');
+
+    // Логирование имени базы данных и коллекции
+    console.log('Using database:', dbName);
+    console.log('Using collection: auth_approvals');
 
     // Проверка на дублирующий запрос
     const existingRequest = await collection.findOne({ userId, appId });
     if (existingRequest) {
       console.log('Existing request found:', existingRequest);
-      // Обновляем существующий запрос вместо создания нового
-      await collection.updateOne(
+      // Обновляем существующий запрос
+      const updateResult = await collection.updateOne(
         { userId, appId },
         { $set: { status: 'pending', requestedAt: new Date(), approvedAt: null } }
       );
+      console.log('Update result:', updateResult);
       return NextResponse.json(
         { message: 'Access request updated successfully' },
         { status: 200 }
@@ -71,8 +77,8 @@ export async function POST(request: Request) {
       approvedAt: null,
     };
 
-    await collection.insertOne(requestData);
-    console.log('New request created:', requestData);
+    const insertResult = await collection.insertOne(requestData);
+    console.log('New request created:', { ...requestData, _id: insertResult.insertedId });
 
     return NextResponse.json(
       { message: 'Access request created successfully' },
