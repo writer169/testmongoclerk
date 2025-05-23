@@ -86,12 +86,3 @@ export async function POST(request: Request) {
     );
   }
 }
-
-// Закрытие соединения при остановке сервера (опционально, для Vercel не обязательно)
-export async function onClose() {
-  if (client) {
-    await client.close();
-    console.log('MongoDB connection closed');
-    client = null;
-  }
-}
