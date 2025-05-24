@@ -21,10 +21,18 @@ async function connectToMongo() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    console.log('Request body:', body); // Отладка: логируем тело запроса
-    const { userId, appId } = body;
+    console.log('Request body:', body);
+    
+    // Извлекаем все необходимые данные из запроса
+    const { 
+      userId, 
+      appId, 
+      userEmail, 
+      userFirstName, 
+      userLastName 
+    } = body;
 
-    // Проверка входных данных
+    // Проверка обязательных данных
     if (!userId || !appId) {
       console.error('Missing userId or appId:', { userId, appId });
       return NextResponse.json(
@@ -44,11 +52,10 @@ export async function POST(request: Request) {
     }
 
     const client = await connectToMongo();
-    const dbName = 'authapp'; // Замените на имя вашей базы данных
+    const dbName = 'authapp';
     const db = client.db(dbName);
     const collection = db.collection('auth_approvals');
 
-    // Логирование имени базы данных и коллекции
     console.log('Using database:', dbName);
     console.log('Using collection: auth_approvals');
 
@@ -56,11 +63,26 @@ export async function POST(request: Request) {
     const existingRequest = await collection.findOne({ userId, appId });
     if (existingRequest) {
       console.log('Existing request found:', existingRequest);
-      // Обновляем существующий запрос
+      
+      // Обновляем существующий запрос с сохранением пользовательских данных
+      const updateData = {
+        status: 'pending',
+        requestedAt: new Date(),
+        approvedAt: null,
+        rejectedAt: null,
+        rejectionReason: null
+      };
+
+      // Добавляем пользовательские данные, если они переданы
+      if (userEmail) updateData.userEmail = userEmail;
+      if (userFirstName) updateData.userFirstName = userFirstName;
+      if (userLastName) updateData.userLastName = userLastName;
+
       const updateResult = await collection.updateOne(
         { userId, appId },
-        { $set: { status: 'pending', requestedAt: new Date(), approvedAt: null } }
+        { $set: updateData }
       );
+      
       console.log('Update result:', updateResult);
       return NextResponse.json(
         { message: 'Access request updated successfully' },
@@ -68,13 +90,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // Создание нового запроса
+    // Создание нового запроса с полными пользовательскими данными
     const requestData = {
       userId,
       appId,
+      userEmail: userEmail || null,
+      userFirstName: userFirstName || null,
+      userLastName: userLastName || null,
       status: 'pending',
       requestedAt: new Date(),
       approvedAt: null,
+      rejectedAt: null,
+      rejectionReason: null,
     };
 
     const insertResult = await collection.insertOne(requestData);
