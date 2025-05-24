@@ -28,7 +28,13 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId: user.id, appId }),
+        body: JSON.stringify({
+  userId: user.id,
+  appId,
+  userEmail: user.emailAddresses[0]?.emailAddress || null,
+  userFirstName: user.firstName || null,
+  userLastName: user.lastName || null,
+}),
       });
       const result = await response.json();
       console.log('API response:', result);
