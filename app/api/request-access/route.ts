@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       console.log('Existing request found:', existingRequest);
       
       // Обновляем существующий запрос с сохранением пользовательских данных
-      const updateData = {
+      const updateData: any = {
         status: 'pending',
         requestedAt: new Date(),
         approvedAt: null,
